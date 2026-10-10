@@ -585,6 +585,41 @@ extern "C" {
         userdata1: u32,
     );
 }
+extern "C" {
+    pub fn compressor_params_set_create_ktx2_file(
+        params: *mut CompressorParams,
+        create_ktx2_file: bool,
+    );
+}
+extern "C" {
+    pub fn compressor_params_set_ktx2_uastc_zstd_supercompression(
+        params: *mut CompressorParams,
+        zstd: bool,
+    );
+}
+extern "C" {
+    pub fn compressor_params_set_ktx2_zstd_supercompression_level(
+        params: *mut CompressorParams,
+        level: ::std::os::raw::c_int,
+    );
+}
+extern "C" {
+    pub fn compressor_params_set_ktx2_srgb_transfer_func(
+        params: *mut CompressorParams,
+        srgb_transfer_func: bool,
+    );
+}
+extern "C" {
+    pub fn compressor_params_add_ktx2_key_value(
+        params: *mut CompressorParams,
+        key: *const ::std::os::raw::c_char,
+        value: *const u8,
+        value_length: usize,
+    );
+}
+extern "C" {
+    pub fn compressor_params_clear_ktx2_key_values(params: *mut CompressorParams);
+}
 #[repr(C)]
 #[repr(align(8))]
 #[derive(Debug, Copy, Clone)]
@@ -662,6 +697,9 @@ fn bindgen_test_layout_CompressorBasisFile() {
 }
 extern "C" {
     pub fn compressor_get_output_basis_file(compressor: *mut Compressor) -> CompressorBasisFile;
+}
+extern "C" {
+    pub fn compressor_get_output_ktx2_file(compressor: *mut Compressor) -> CompressorBasisFile;
 }
 extern "C" {
     pub fn compressor_get_basis_file_size(compressor: *const Compressor) -> u32;

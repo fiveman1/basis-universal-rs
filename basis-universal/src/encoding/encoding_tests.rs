@@ -118,3 +118,55 @@ fn test_encode_image() {
 
     std::mem::drop(compressor);
 }
+
+#[test]
+fn test_encode_ktx2() {
+    let png_file = include_bytes!("../../test_assets/rust-logo.png");
+    let image_data = image::load_from_memory_with_format(png_file, image::ImageFormat::Png)
+        .unwrap()
+        .to_rgba();
+
+    let mut compressor_params = CompressorParams::new();
+    compressor_params.set_basis_format(BasisTextureFormat::UASTC4x4);
+    compressor_params.set_generate_mipmaps(true);
+    compressor_params.set_create_ktx2_file(true);
+    compressor_params.set_ktx2_uastc_supercompression(Some(19));
+    compressor_params.set_ktx2_transfer_function(ColorSpace::Srgb);
+    compressor_params.add_ktx2_key_value("test_key", b"test_value");
+    compressor_params
+        .source_image_mut(0)
+        .init(&image_data, image_data.width(), image_data.height(), 4);
+
+    let mut compressor = Compressor::default();
+    unsafe {
+        assert!(compressor.init(&compressor_params));
+        compressor.process().unwrap();
+    }
+
+    use std::convert::TryInto;
+    let ktx2 = compressor.ktx2_file();
+    let read_u32 = |offset: usize| u32::from_le_bytes(ktx2[offset..offset + 4].try_into().unwrap());
+    // KTX2 identifier
+    assert_eq!(
+        &ktx2[..12],
+        &[0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A]
+    );
+    // pixelWidth, pixelHeight
+    assert_eq!(read_u32(20), image_data.width());
+    assert_eq!(read_u32(24), image_data.height());
+    // levelCount includes the generated mipmaps
+    assert!(read_u32(40) > 1);
+    // supercompressionScheme 2 is Zstandard
+    assert_eq!(read_u32(44), 2);
+    // the data format descriptor's transfer function is sRGB (2)
+    let dfd_offset = read_u32(48) as usize;
+    assert_eq!((read_u32(dfd_offset + 12) >> 16) & 0xFF, 2);
+    // the key/value data contains the added entry
+    let kvd_offset = read_u32(56) as usize;
+    let kvd_length = read_u32(60) as usize;
+    let kvd = &ktx2[kvd_offset..kvd_offset + kvd_length];
+    assert!(kvd.windows(9).any(|w| w == b"test_key\0"));
+
+    // the KTX2 file is smaller than the uncompressed .basis file
+    assert!(ktx2.len() < compressor.basis_file().len());
+}

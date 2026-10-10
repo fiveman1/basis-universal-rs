@@ -309,6 +309,75 @@ impl CompressorParams {
         }
     }
 
+    /// Also output a KTX2 file, accessed with [Compressor::ktx2_file]. The .basis file is still
+    /// created, the KTX2 file is converted from it losslessly.
+    pub fn set_create_ktx2_file(
+        &mut self,
+        create_ktx2_file: bool,
+    ) {
+        unsafe {
+            sys::compressor_params_set_create_ktx2_file(self.0, create_ktx2_file);
+        }
+    }
+
+    /// Supercompress UASTC data in the KTX2 file with Zstandard at the given level (1 to 22,
+    /// the C++ library defaults to 6), or None to store it uncompressed. Has no effect on ETC1S,
+    /// which always uses BasisLZ.
+    pub fn set_ktx2_uastc_supercompression(
+        &mut self,
+        zstd_level: Option<i32>,
+    ) {
+        unsafe {
+            sys::compressor_params_set_ktx2_uastc_zstd_supercompression(
+                self.0,
+                zstd_level.is_some(),
+            );
+            if let Some(level) = zstd_level {
+                sys::compressor_params_set_ktx2_zstd_supercompression_level(self.0, level);
+            }
+        }
+    }
+
+    /// Set the transfer function recorded in the KTX2 file's data format descriptor. sRGB means
+    /// the texture should be sampled through an sRGB format so it is decoded to linear.
+    pub fn set_ktx2_transfer_function(
+        &mut self,
+        color_space: ColorSpace,
+    ) {
+        let srgb = match color_space {
+            ColorSpace::Linear => false,
+            ColorSpace::Srgb => true,
+        };
+        unsafe {
+            sys::compressor_params_set_ktx2_srgb_transfer_func(self.0, srgb);
+        }
+    }
+
+    /// Add a key/value entry to the KTX2 file's metadata. The key must not contain a nul byte.
+    /// The library always adds a "KTXwriter" entry.
+    pub fn add_ktx2_key_value(
+        &mut self,
+        key: &str,
+        value: &[u8],
+    ) {
+        let key = std::ffi::CString::new(key).expect("KTX2 key must not contain a nul byte");
+        unsafe {
+            sys::compressor_params_add_ktx2_key_value(
+                self.0,
+                key.as_ptr(),
+                value.as_ptr(),
+                value.len(),
+            );
+        }
+    }
+
+    /// Remove all key/value entries added with [CompressorParams::add_ktx2_key_value]
+    pub fn clear_ktx2_key_values(&mut self) {
+        unsafe {
+            sys::compressor_params_clear_ktx2_key_values(self.0);
+        }
+    }
+
     /// The `basisu` command line compressor offers a -normal_map parameter that sets several
     /// values automatically. This convenience function mimics that parameter.
     ///

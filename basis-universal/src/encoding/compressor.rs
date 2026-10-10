@@ -7,6 +7,7 @@ pub use basis_universal_sys::ColorU8;
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(i32)]
 pub enum CompressorErrorCode {
+    cECFailedInitializing = sys::basisu_basis_compressor_error_code_cECFailedInitializing,
     cECFailedReadingSourceImages =
         sys::basisu_basis_compressor_error_code_cECFailedReadingSourceImages,
     cECFailedValidating = sys::basisu_basis_compressor_error_code_cECFailedValidating,
@@ -18,6 +19,7 @@ pub enum CompressorErrorCode {
     cECFailedWritingOutput = sys::basisu_basis_compressor_error_code_cECFailedWritingOutput,
     cECFailedUASTCRDOPostProcess =
         sys::basisu_basis_compressor_error_code_cECFailedUASTCRDOPostProcess,
+    cECFailedCreateKTX2File = sys::basisu_basis_compressor_error_code_cECFailedCreateKTX2File,
 }
 
 impl Into<sys::basisu_basis_compressor_error_code> for CompressorErrorCode {
@@ -84,6 +86,18 @@ impl Compressor {
     pub fn basis_file(&self) -> &[u8] {
         unsafe {
             let result = sys::compressor_get_output_basis_file(self.0);
+            std::slice::from_raw_parts(result.pData, result.length as usize)
+        }
+    }
+
+    /// Access the KTX2 file. Empty unless [CompressorParams::set_create_ktx2_file] was set and
+    /// `process()` succeeded
+    pub fn ktx2_file(&self) -> &[u8] {
+        unsafe {
+            let result = sys::compressor_get_output_ktx2_file(self.0);
+            if result.length == 0 {
+                return &[];
+            }
             std::slice::from_raw_parts(result.pData, result.length as usize)
         }
     }

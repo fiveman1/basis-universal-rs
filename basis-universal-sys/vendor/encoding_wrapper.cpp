@@ -233,6 +233,40 @@ extern "C" {
         params->pParams->m_userdata1 = userdata1;
     }
 
+    void compressor_params_set_create_ktx2_file(CompressorParams *params, bool create_ktx2_file) {
+        params->pParams->m_create_ktx2_file = create_ktx2_file;
+    }
+
+    // Zstd supercompression of UASTC data in KTX2 files. ETC1S always uses BasisLZ.
+    void compressor_params_set_ktx2_uastc_zstd_supercompression(CompressorParams *params, bool zstd) {
+        params->pParams->m_ktx2_uastc_supercompression = zstd ? basist::KTX2_SS_ZSTANDARD : basist::KTX2_SS_NONE;
+    }
+
+    void compressor_params_set_ktx2_zstd_supercompression_level(CompressorParams *params, int level) {
+        params->pParams->m_ktx2_zstd_supercompression_level = level;
+    }
+
+    void compressor_params_set_ktx2_srgb_transfer_func(CompressorParams *params, bool srgb_transfer_func) {
+        params->pParams->m_ktx2_srgb_transfer_func = srgb_transfer_func;
+    }
+
+    // key must be zero terminated
+    void compressor_params_add_ktx2_key_value(CompressorParams *params, const char *key, const uint8_t *value, size_t value_length) {
+        basist::ktx2_transcoder::key_value_vec &key_values = params->pParams->m_ktx2_key_values;
+        key_values.enlarge(1);
+        size_t key_length = strlen(key) + 1;
+        key_values.back().m_key.resize(key_length);
+        memcpy(key_values.back().m_key.data(), key, key_length);
+        key_values.back().m_value.resize(value_length);
+        if (value_length) {
+            memcpy(key_values.back().m_value.data(), value, value_length);
+        }
+    }
+
+    void compressor_params_clear_ktx2_key_values(CompressorParams *params) {
+        params->pParams->m_ktx2_key_values.clear();
+    }
+
     // compressor_params_set_multithreaded is not implemented because this parameter is controlled by thread count
     // passed to compressor_new()
 
@@ -286,6 +320,15 @@ extern "C" {
         const basisu::uint8_vec &basis_file = compressor->pCompressor->get_output_basis_file();
         file.pData = basis_file.data();
         file.length = basis_file.size();
+        return file;
+    }
+
+    // Only valid if create_ktx2_file was set and process() succeeded
+    CompressorBasisFile compressor_get_output_ktx2_file(Compressor *compressor) {
+        CompressorBasisFile file;
+        const basisu::uint8_vec &ktx2_file = compressor->pCompressor->get_output_ktx2_file();
+        file.pData = ktx2_file.data();
+        file.length = ktx2_file.size();
         return file;
     }
 

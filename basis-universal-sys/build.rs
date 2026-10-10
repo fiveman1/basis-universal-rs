@@ -17,7 +17,7 @@ fn build_with_common_settings() -> cc::Build {
 fn main() {
     build_with_common_settings()
         .cpp(true)
-        .define("BASISD_SUPPORT_KTX2_ZSTD", "0")
+        .define("BASISD_SUPPORT_KTX2_ZSTD", "1")
         //.define("BASISU_SUPPORT_SSE", "1") TODO: expose this in a futher release
         .flag_if_supported("--std=c++11")
         .file("vendor/basis_universal/encoder/pvpngreader.cpp")
@@ -41,6 +41,12 @@ fn main() {
         .file("vendor/transcoding_wrapper.cpp")
         .file("vendor/encoding_wrapper.cpp")
         .compile("basisuniversal");
+
+    // Zstd is used to supercompress UASTC data in KTX2 files. It is C, so it is built separately.
+    // It is compiled after basisuniversal so it is linked after the code that uses it.
+    build_with_common_settings()
+        .file("vendor/basis_universal/zstd/zstd.c")
+        .compile("basisuniversal_zstd");
 
     // We regenerate binding code and check it in. (See generate_bindings.sh)
 }

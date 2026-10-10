@@ -299,6 +299,18 @@ impl CompressorParams {
         }
     }
 
+    /// When generating mipmaps, filter across the image edges as if the image repeats (the default,
+    /// right for tiling textures), or clamp at the edges (right for textures that don't tile, like cube
+    /// map faces, where wrapping blends opposite edges into each other)
+    pub fn set_mip_wrapping(
+        &mut self,
+        mip_wrapping: bool,
+    ) {
+        unsafe {
+            sys::compressor_params_set_mip_wrapping(self.0, mip_wrapping);
+        }
+    }
+
     /// Set arbitrary userdata to be included with the basis-universal binary data
     pub fn set_userdata(
         &mut self,

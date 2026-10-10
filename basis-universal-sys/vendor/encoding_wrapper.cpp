@@ -228,6 +228,11 @@ extern "C" {
         params->pParams->m_mip_smallest_dimension = mip_smallest_dimension;
     }
 
+    // When generating mipmaps, filter across the image edges as if it repeats (the default), or clamp at them
+    void compressor_params_set_mip_wrapping(CompressorParams *params, bool mip_wrapping) {
+        params->pParams->m_mip_wrapping = mip_wrapping;
+    }
+
     void compressor_params_set_userdata(CompressorParams *params, uint32_t userdata0, uint32_t userdata1) {
         params->pParams->m_userdata0 = userdata0;
         params->pParams->m_userdata1 = userdata1;

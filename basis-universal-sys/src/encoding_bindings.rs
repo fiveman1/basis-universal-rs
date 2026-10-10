@@ -579,6 +579,9 @@ extern "C" {
     );
 }
 extern "C" {
+    pub fn compressor_params_set_mip_wrapping(params: *mut CompressorParams, mip_wrapping: bool);
+}
+extern "C" {
     pub fn compressor_params_set_userdata(
         params: *mut CompressorParams,
         userdata0: u32,

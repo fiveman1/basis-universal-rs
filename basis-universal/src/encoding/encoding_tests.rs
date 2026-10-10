@@ -38,6 +38,7 @@ fn test_compressor_params_smoketest_bindings() {
     compressor_params.set_uastc_quality_level(crate::UASTC_QUALITY_DEFAULT);
     compressor_params.set_basis_format(BasisTextureFormat::UASTC4x4);
     compressor_params.set_generate_mipmaps(true);
+    compressor_params.set_mip_wrapping(false);
 
     compressor_params.reset();
 }
